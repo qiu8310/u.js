@@ -1,0 +1,59 @@
+#!/usr/bin/env node
+'use strict';
+
+process.env.YLOG = (process.env.YLOG ? process.env.YLOG + ',' : 'u:*');
+
+var ylog = require('ylog');
+
+ylog.Tag.ns.len = 10;
+ylog.Tag.ns.align = 'right';
+ylog.setLevel('ok');
+
+
+var program = require('commander');
+var u = require('../');
+var pkg = require('../package.json');
+
+function setLevel(level) { ylog.setLevel(level); return level; }
+function setBaiduApiKey(key) { process.env.BAIDU_API_KEY = key; return key; }
+
+program
+  .version(pkg.version)
+  .option('-b, --baidu-api-key <string>', '设置百度 API_KEY，默认会使用一个免费的 KEY', setBaiduApiKey)
+  .option('-l, --level <level>', 'ylog 日志级别：silly, verbose, debug, info, ok , warn, error, fatal, silent', setLevel);
+
+program
+  .command('tiny <fromImgFile> [toNewFile]')
+  .description('调用 tinypng 接口压缩图片（需要翻墙）')
+  .action(function(fromImgFile, toNewFile) {
+    if (!toNewFile) toNewFile = fromImgFile.replace(/\w+$/, 'out.$&');
+    u.tiny(fromImgFile, toNewFile);
+  });
+
+program
+  .command('ocr <imgFile>')
+  .description('调用 baidu ocr 接口识别图片上文字')
+  .option('-d, --detectType <detectType>', 'OCR接口类型，LocateRecognize, Recognize, Locate, SingleCharRecognize')
+  .option('-l, --languageType <languageType>', '要检测的文字类型，可以为：CHN_ENG, ENG, JAP, KOR')
+  .action(function(imgFile, options) {
+    u.ocr(imgFile, options);
+  });
+
+program
+  .command('words <string>')
+  .description('调用 baidu 分词接口对字符串进行分词')
+  .option('-f, --param1 <number>', '')
+  .option('-t, --param2 <number>', '')
+  .action(function(str, options) {
+    u.words(str, options);
+  });
+
+program
+  .command('ip <ip>')
+  .description('查询 ip 所在的地理位置')
+  .action(function(ip) {
+    u.ip(ip);
+  });
+
+program.parse(process.argv);
+
